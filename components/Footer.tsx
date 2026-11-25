@@ -39,7 +39,7 @@ export function Footer() {
 
         <div className="mt-8 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm text-sand-300 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Didact Capital</p>
-          <a href="#get-funding" className="font-semibold text-sand-100 hover:text-white">
+          <a href="/#get-funding" className="font-semibold text-sand-100 hover:text-white">
             Check your funding options
           </a>
         </div>

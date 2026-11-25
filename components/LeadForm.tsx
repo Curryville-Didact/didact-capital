@@ -88,6 +88,9 @@ export function LeadForm() {
               >
                 Thanks — we&apos;ll be in touch within 24 hours.
               </h2>
+              <a href="/apply" className="btn-primary mt-6">
+                Continue application
+              </a>
               <p className="mt-3 text-base leading-relaxed text-mute">
                 You can also reach us directly at{" "}
                 <a

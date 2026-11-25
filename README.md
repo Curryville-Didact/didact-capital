@@ -34,7 +34,7 @@ The handler lives in `app/api/submit-lead/route.ts`.
 
 1. Push this project to GitHub.
 2. Import the repository in Vercel.
-3. In Vercel project Settings, add `AIRTABLE_API_KEY`, `AIRTABLE_BASE_ID`, and `AIRTABLE_TABLE_NAME` before the first deploy. Do not expose these to the browser.
+3. In Vercel project Settings, add `AIRTABLE_API_KEY`, `AIRTABLE_BASE_ID`, `AIRTABLE_TABLE_NAME`, `BLOB_READ_WRITE_TOKEN`, `SSN_ENCRYPTION_KEY`, and `LENDER_EXPORT_SECRET` before the first deploy. Do not expose these to the browser. `BLOB_READ_WRITE_TOKEN` is the Vercel Blob token used to store bank-statement PDFs. Create a Blob store in the project, then copy its read/write token. `SSN_ENCRYPTION_KEY` must be a strong random 32-byte key (`openssl rand -base64 32`) and must never be committed. `LENDER_EXPORT_SECRET` is the shared secret sent in the `x-lender-export-secret` header when calling `POST /api/lender-export`. The Applications table in the same base needs these fields: Application ID, Full Name, Business Name, Email, Phone, Entity Type, EIN, Business Start Date, Industry, Business Address, Owner Name, Owner DOB, Ownership %, SSN Encrypted, Credit Score Range, Amount Needed, Use of Funds, How Soon, Bank Statement URLs, Status (New, Docs Review, Submitted to Lender, Approved, Declined, Funded), Lender (Credibly, Fundworks, Unassigned), Notes, and Created At. `SSN Encrypted` stores AES-256-GCM ciphertext (base64). The plaintext Social Security number is only recoverable through `/api/lender-export`.
 4. Add `didactcapital.fund` under Domains.
 
 ## Project structure
@@ -42,4 +42,8 @@ The handler lives in `app/api/submit-lead/route.ts`.
 - `app/page.tsx` — page composition
 - `components/` — header, hero, form, problem, process, social proof, industries, footer
 - `lib/lead-schema.ts` — shared Zod schema and field options
-- `app/api/submit-lead/route.ts` — Airtable submission endpoint
+- `app/api/submit-lead/route.ts` — landing-page lead endpoint
+- `app/apply/page.tsx` — full financing application
+- `app/api/submit-application/route.ts` — application endpoint
+- `app/api/lender-export/route.ts` — decrypts an SSN for the lender portal
+- `app/api/upload-statement/route.ts` — bank statement upload endpoint

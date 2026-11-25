@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 
 const links = [
-  { href: "#how-it-works", label: "How It Works" },
-  { href: "#industries", label: "Industries" },
-  { href: "#get-funding", label: "Get Funding" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/#industries", label: "Industries" },
+  { href: "/#get-funding", label: "Get Funding" },
+  { href: "/apply", label: "Apply" },
 ];
 
 export function Header() {
@@ -27,7 +28,7 @@ export function Header() {
     <header id="top" className="sticky top-0 z-50 border-b border-sand-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-page items-center justify-between gap-4 px-5 py-3 sm:px-8">
         <a
-          href="#top"
+          href="/"
           aria-label="Didact Capital, home"
           className="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy-900"
         >
@@ -47,7 +48,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <a href="#get-funding" className="btn-primary px-3 py-2 text-sm sm:px-4">
+          <a href="/#get-funding" className="btn-primary px-3 py-2 text-sm sm:px-4">
             Check Your Options
           </a>
           <button
