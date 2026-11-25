@@ -6,6 +6,19 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  console.log(
+    "Blob token defined:",
+    !!process.env.BLOB_READ_WRITE_TOKEN,
+    "length:",
+    process.env.BLOB_READ_WRITE_TOKEN?.length,
+  );
+  console.log(
+    "Blob store id defined:",
+    !!process.env.BLOB_STORE_ID,
+    "length:",
+    process.env.BLOB_STORE_ID?.length,
+  );
+
   let body: HandleUploadBody;
 
   try {
