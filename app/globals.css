@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  @apply bg-sand-50 font-sans text-ink antialiased;
+}
+
+::selection {
+  background: #c4a15a;
+  color: #0b1b33;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-gold-500 px-5 py-3 text-base font-semibold text-navy-950 shadow-sm transition hover:bg-gold-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500;
+  }
+
+  .btn-navy {
+    @apply inline-flex w-full items-center justify-center rounded-md bg-navy-900 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-navy-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .field-input {
+    @apply mt-1.5 w-full rounded-md border border-sand-300 bg-white px-3.5 py-3 text-base text-ink shadow-sm outline-none transition placeholder:text-mute/70 focus:border-navy-700 focus:ring-2 focus:ring-navy-700/15;
+  }
+
+  .field-input-error {
+    @apply border-red-700 focus:border-red-700 focus:ring-red-700/20;
+  }
+
+  .fade-in {
+    animation: fade-in 400ms ease;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
