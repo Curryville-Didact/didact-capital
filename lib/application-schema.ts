@@ -91,10 +91,15 @@ export const ownerStepSchema = z.object({
   homeCity: requiredText("the home city", 80),
   homeState: stateCode,
   homePostalCode: postalCode,
-  ownershipPercentage: z.coerce
-    .number({ invalid_type_error: "Enter an ownership percentage." })
-    .min(1, "Ownership must be at least 1%.")
-    .max(100, "Ownership cannot be more than 100%."),
+  ownershipPercentage: z
+    .union([z.number(), z.string()])
+    .transform((value) => (typeof value === "number" ? value : Number(value.replace(/%/g, "").trim())))
+    .pipe(
+      z
+        .number({ invalid_type_error: "Enter an ownership percentage." })
+        .min(1, "Ownership must be at least 1%.")
+        .max(100, "Ownership cannot be more than 100%."),
+    ),
   creditScoreRange: z.enum(creditScoreRanges, { errorMap: () => ({ message: "Select a credit score range." }) }),
 });
 

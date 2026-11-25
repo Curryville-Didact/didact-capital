@@ -236,7 +236,10 @@ export function ApplyForm() {
       const response = await fetch("/api/submit-application", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed),
+        body: JSON.stringify({
+          ...parsed,
+          ownershipPercentage: result.success ? result.data.ownershipPercentage : Number(String(draft.ownershipPercentage).replace(/%/g, "")),
+        }),
       });
       const payload = (await response.json()) as {
         ok?: boolean;
@@ -358,7 +361,13 @@ export function ApplyForm() {
               <input id="dateOfBirth" type="date" className={inputClass(errors.dateOfBirth)} value={draft.dateOfBirth} onChange={(event) => update("dateOfBirth", event.target.value)} autoComplete="bday" />
             </Field>
             <Field label="Ownership percentage" id="ownershipPercentage" error={errors.ownershipPercentage}>
-              <input id="ownershipPercentage" className={inputClass(errors.ownershipPercentage)} value={draft.ownershipPercentage} onChange={(event) => update("ownershipPercentage", event.target.value)} inputMode="decimal" />
+              <input
+                id="ownershipPercentage"
+                className={inputClass(errors.ownershipPercentage)}
+                value={draft.ownershipPercentage}
+                onChange={(event) => update("ownershipPercentage", event.target.value.replace(/%/g, "").replace(/[^\d.]/g, ""))}
+                inputMode="decimal"
+              />
             </Field>
             <Select label="Credit score range" id="creditScoreRange" value={draft.creditScoreRange} error={errors.creditScoreRange} options={creditScoreRanges} onChange={(value) => update("creditScoreRange", value)} />
             <Field label="Home street address" id="homeStreet" error={errors.homeStreet} className="sm:col-span-2">
