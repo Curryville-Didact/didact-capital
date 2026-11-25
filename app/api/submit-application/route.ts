@@ -68,6 +68,38 @@ export async function POST(request: Request) {
     .join("\n");
 
   const url = `https://api.airtable.com/v0/${encodeURIComponent(baseId)}/${encodeURIComponent(tableName)}`;
+  const fields = {
+    "Application ID": id,
+    "Full Name": application.ownerName,
+    "Business Name": application.legalBusinessName,
+    Email: application.email,
+    Phone: application.phone,
+    "Entity Type": application.entityType,
+    EIN: application.ein,
+    "Business Start Date": application.businessStartDate,
+    Industry: application.industry,
+    "Business Address": formatAddress(
+      application.street,
+      application.city,
+      application.state,
+      application.postalCode,
+    ),
+    "Owner Name": application.ownerName,
+    "Owner DOB": application.dateOfBirth,
+    "Ownership %": application.ownershipPercentage,
+    "SSN Encrypted": ssnEncrypted,
+    "Credit Score Range": application.creditScoreRange,
+    "Amount Needed": application.amountNeeded,
+    "Use of Funds": application.useOfFunds,
+    "How Soon": application.howSoon,
+    "Bank Statement URLs": application.statements.map((file) => file.url).join(", "),
+    Status: "New",
+    Lender: "Unassigned",
+    Notes: notes,
+    "Created At": new Date().toISOString(),
+  };
+
+  console.log("Ownership % value:", JSON.stringify(fields["Ownership %"]));
 
   try {
     const airtable = await fetch(url, {
@@ -77,40 +109,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        records: [
-          {
-            fields: {
-              "Application ID": id,
-              "Full Name": application.ownerName,
-              "Business Name": application.legalBusinessName,
-              Email: application.email,
-              Phone: application.phone,
-              "Entity Type": application.entityType,
-              EIN: application.ein,
-              "Business Start Date": application.businessStartDate,
-              Industry: application.industry,
-              "Business Address": formatAddress(
-                application.street,
-                application.city,
-                application.state,
-                application.postalCode,
-              ),
-              "Owner Name": application.ownerName,
-              "Owner DOB": application.dateOfBirth,
-              "Ownership %": application.ownershipPercentage,
-              "SSN Encrypted": ssnEncrypted,
-              "Credit Score Range": application.creditScoreRange,
-              "Amount Needed": application.amountNeeded,
-              "Use of Funds": application.useOfFunds,
-              "How Soon": application.howSoon,
-              "Bank Statement URLs": application.statements.map((file) => file.url).join(", "),
-              Status: "New",
-              Lender: "Unassigned",
-              Notes: notes,
-              "Created At": new Date().toISOString(),
-            },
-          },
-        ],
+        records: [{ fields }],
       }),
     });
 
