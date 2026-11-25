@@ -1,68 +1,68 @@
+import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { put } from "@vercel/blob";
 import { MAX_STATEMENT_BYTES } from "@/lib/application-schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function fail(message: string, status: number) {
+  return NextResponse.json({ ok: false, message }, { status });
+}
 
 export async function POST(request: Request) {
-  console.log(
-    "Blob token defined:",
-    !!process.env.BLOB_READ_WRITE_TOKEN,
-    "length:",
-    process.env.BLOB_READ_WRITE_TOKEN?.length,
-  );
-  console.log(
-    "Blob store id defined:",
-    !!process.env.BLOB_STORE_ID,
-    "length:",
-    process.env.BLOB_STORE_ID?.length,
-  );
+  const allowed = rateLimit(`upload:${clientIp(request)}`, 20, 10 * 60 * 1000);
+  if (!allowed) {
+    return fail("Too many uploads. Wait a few minutes and try again.", 429);
+  }
 
-  let body: HandleUploadBody;
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    return fail("Statement uploads are not configured yet.", 500);
+  }
 
+  let form: FormData;
   try {
-    body = (await request.json()) as HandleUploadBody;
+    form = await request.formData();
   } catch {
-    return NextResponse.json({ error: "Upload the statement as a PDF." }, { status: 400 });
+    return fail("Upload the statement as a PDF.", 400);
   }
 
-  if (body.type === "blob.generate-client-token") {
-    const allowed = rateLimit(`upload:${clientIp(request)}`, 20, 10 * 60 * 1000);
-    if (!allowed) {
-      return NextResponse.json({ error: "Too many uploads. Wait a few minutes and try again." }, { status: 429 });
-    }
+  const file = form.get("file");
+  if (!(file instanceof File)) {
+    return fail("Upload one PDF.", 400);
+  }
+  if (file.size <= 0 || file.size > MAX_STATEMENT_BYTES) {
+    return fail("Each statement must be 10MB or smaller.", 400);
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json({ error: "Statement uploads are not configured yet." }, { status: 500 });
+  const type = file.type.toLowerCase();
+  const originalName = file.name || "statement.pdf";
+  const pdfType = type === "application/pdf" || ((type === "" || type === "application/octet-stream") && originalName.toLowerCase().endsWith(".pdf"));
+  if (!pdfType) {
+    return fail("Upload the statement as a PDF.", 400);
   }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  if (!bytes.subarray(0, 5).equals(Buffer.from("%PDF-"))) {
+    return fail("Upload the statement as a PDF.", 400);
+  }
+
+  const displayName = originalName.replace(/[^a-zA-Z0-9._ -]/g, "_").slice(0, 180) || "statement.pdf";
+  const filePart = (displayName.toLowerCase().endsWith(".pdf") ? displayName : `${displayName}.pdf`).replace(/\s+/g, "_");
+  const pathname = `statements/${randomBytes(8).toString("hex")}-${filePart}`;
 
   try {
-    const result = await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken: async (pathname) => {
-        const normalized = pathname.toLowerCase();
-        if (!normalized.startsWith("statements/") || !normalized.endsWith(".pdf")) {
-          throw new Error("Only PDF bank statements can be uploaded.");
-        }
-
-        return {
-          allowedContentTypes: ["application/pdf"],
-          maximumSizeInBytes: MAX_STATEMENT_BYTES,
-          addRandomSuffix: true,
-        };
-      },
-      onUploadCompleted: async () => {
-        return;
-      },
+    const blob = await put(pathname, bytes, {
+      access: "private",
+      contentType: "application/pdf",
+      token,
     });
 
-    return NextResponse.json(result);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Upload failed.";
-    console.error("Statement upload rejected");
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ ok: true, url: blob.url, filename: displayName });
+  } catch {
+    console.error("Statement upload failed");
+    return fail("We couldn't upload that statement. Try again in a moment.", 500);
   }
 }

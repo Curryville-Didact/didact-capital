@@ -1,6 +1,5 @@
 "use client";
 
-import { upload } from "@vercel/blob/client";
 import { useEffect, useState } from "react";
 import {
   amountOptions,
@@ -173,20 +172,26 @@ export function ApplyForm() {
     const uploaded: StatementFile[] = [];
     for (const file of incoming) {
       setUploading(file.name);
-      setProgress(0);
+      setProgress(8);
+      const timer = window.setInterval(() => {
+        setProgress((current) => (current >= 90 ? current : current + 8));
+      }, 250);
       try {
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
-        const pathname = `statements/${crypto.randomUUID()}/${safeName.toLowerCase().endsWith(".pdf") ? safeName : `${safeName}.pdf`}`;
-        const blob = await upload(pathname, file, {
-          access: "public",
-          handleUploadUrl: "/api/upload-statement",
-          contentType: "application/pdf",
-          onUploadProgress: (event) => setProgress(event.percentage),
-        });
-        uploaded.push({ name: file.name, url: blob.url, size: file.size });
-      } catch (error) {
-        setFormError(error instanceof Error ? error.message : `Couldn't upload ${file.name}.`);
+        const body = new FormData();
+        body.append("file", file);
+        const response = await fetch("/api/upload-statement", { method: "POST", body });
+        const payload = (await response.json()) as { ok?: boolean; url?: string; filename?: string; message?: string };
+        if (!response.ok || !payload.ok || !payload.url) {
+          setFormError(payload.message || `Couldn't upload ${file.name}.`);
+          break;
+        }
+        setProgress(100);
+        uploaded.push({ name: payload.filename || file.name, url: payload.url, size: file.size });
+      } catch {
+        setFormError(`Couldn't upload ${file.name}.`);
         break;
+      } finally {
+        window.clearInterval(timer);
       }
     }
 
