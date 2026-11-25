@@ -86,7 +86,8 @@ export async function POST(request: Request) {
     ),
     "Owner Name": application.ownerName,
     "Owner DOB": application.dateOfBirth,
-    "Ownership Percentage": String(application.ownershipPercentage),
+    // Temporary for debugging: omit Ownership Percentage from the Airtable payload.
+    // "Ownership Percentage": String(application.ownershipPercentage),
     "SSN Encrypted": ssnEncrypted,
     "Credit Score Range": application.creditScoreRange,
     "Amount Needed": application.amountNeeded,
@@ -99,11 +100,12 @@ export async function POST(request: Request) {
     "Created At": new Date().toISOString(),
   };
 
+  const payloadFields = fields as Record<string, unknown>;
   console.log(
     "Ownership Percentage value:",
-    JSON.stringify(fields["Ownership Percentage"]),
+    JSON.stringify(payloadFields["Ownership Percentage"]),
     "type:",
-    typeof fields["Ownership Percentage"],
+    typeof payloadFields["Ownership Percentage"],
   );
 
   try {
