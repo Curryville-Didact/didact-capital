@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     ),
     "Owner Name": application.ownerName,
     "Owner DOB": application.dateOfBirth,
-    "Ownership Percentage": application.ownershipPercentage,
+    "Ownership Percentage": String(application.ownershipPercentage),
     "SSN Encrypted": ssnEncrypted,
     "Credit Score Range": application.creditScoreRange,
     "Amount Needed": application.amountNeeded,
@@ -99,7 +99,12 @@ export async function POST(request: Request) {
     "Created At": new Date().toISOString(),
   };
 
-  console.log("Ownership % value:", JSON.stringify(fields["Ownership Percentage"]));
+  console.log(
+    "Ownership Percentage value:",
+    JSON.stringify(fields["Ownership Percentage"]),
+    "type:",
+    typeof fields["Ownership Percentage"],
+  );
 
   try {
     const airtable = await fetch(url, {
