@@ -154,11 +154,18 @@ export const statementsSchema = z
   .min(MIN_STATEMENTS, "Upload at least 3 months of bank statements.")
   .max(MAX_STATEMENTS, "Upload no more than 5 statements.");
 
+const signatureSchema = z
+  .string()
+  .trim()
+  .refine((value) => value.startsWith("data:image/png;base64,"), "Draw your signature.")
+  .refine((value) => value.length <= 700_000, "The signature image is too large.");
+
 export const submitApplicationSchema = businessStepSchema
   .merge(ownerStepSchema)
   .merge(fundingStepSchema)
   .extend({
     statements: statementsSchema,
+    signature: signatureSchema,
     certified: z.literal(true, {
       errorMap: () => ({ message: "Certify that the information is true and correct." }),
     }),

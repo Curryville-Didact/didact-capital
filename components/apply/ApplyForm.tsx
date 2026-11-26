@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import SignatureCanvas from "react-signature-canvas";
 import { industryOptions, timingOptions } from "@/lib/lead-schema";
 import {
   MAX_STATEMENT_BYTES,
@@ -21,7 +22,7 @@ import {
 
 const STORAGE_KEY = "didact-apply-draft";
 
-const steps = ["Business", "Owner", "Funding", "Statements", "Review"] as const;
+const steps = ["Business", "Owner", "Funding", "Statements", "Signature", "Review"] as const;
 
 type Draft = {
   legalBusinessName: string;
@@ -88,7 +89,11 @@ export function ApplyForm() {
   const [progress, setProgress] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [applicationId, setApplicationId] = useState("");
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [pdfNote, setPdfNote] = useState("");
   const [certified, setCertified] = useState(false);
+  const [signature, setSignature] = useState("");
+  const signatureRef = useRef<SignatureCanvas>(null);
 
   useEffect(() => {
     try {
@@ -108,6 +113,11 @@ export function ApplyForm() {
     if (!ready || applicationId) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, draft }));
   }, [ready, step, draft, applicationId]);
+
+  useEffect(() => {
+    if (step !== 4 || !signature || !signatureRef.current || !signatureRef.current.isEmpty()) return;
+    void signatureRef.current.fromDataURL(signature);
+  }, [step, signature]);
 
   const update = (key: keyof Draft, value: string) => {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -134,6 +144,21 @@ export function ApplyForm() {
   };
 
   const continueStep = () => {
+    if (step === 4) {
+      const pad = signatureRef.current;
+      const nextErrors: Record<string, string> = {};
+      if (!pad || pad.isEmpty()) nextErrors.signature = "Draw your signature.";
+      if (!certified) nextErrors.certified = "Certify that the information is true and correct.";
+      if (Object.keys(nextErrors).length) {
+        setErrors(nextErrors);
+        return;
+      }
+      setSignature(pad?.toDataURL("image/png") ?? "");
+      setErrors({});
+      goTo(5);
+      return;
+    }
+
     const result = validateStep();
     if (!result.success) {
       const messages = fieldErrors(result.error);
@@ -209,6 +234,7 @@ export function ApplyForm() {
     const parsed = {
       ...draft,
       ssn,
+      signature,
       certified,
     };
     const result = ownerStepSchema.safeParse(parsed);
@@ -220,6 +246,7 @@ export function ApplyForm() {
       ...(result.success ? {} : fieldErrors(result.error)),
       ...(funding.success ? {} : fieldErrors(funding.error)),
       ...(files.success ? {} : { statements: files.error.issues[0]?.message ?? "Add your statements." }),
+      ...(signature.startsWith("data:image/png;base64,") ? {} : { signature: "Draw your signature." }),
       ...(certified ? {} : { certified: "Certify that the information is true and correct." }),
     };
     if (Object.keys(nextErrors).length) {
@@ -248,6 +275,7 @@ export function ApplyForm() {
       const payload = (await response.json()) as {
         ok?: boolean;
         applicationId?: string;
+        pdfUrl?: string;
         message?: string;
         fieldErrors?: Record<string, string>;
       };
@@ -257,6 +285,9 @@ export function ApplyForm() {
         return;
       }
       setSsn("");
+      setSignature("");
+      setPdfUrl(payload.pdfUrl ?? "");
+      setPdfNote(payload.pdfUrl ? "" : payload.message ?? "");
       setApplicationId(payload.applicationId);
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -276,6 +307,12 @@ export function ApplyForm() {
           </h1>
           <p className="mt-4 text-base text-mute">Your application ID</p>
           <p className="mt-2 font-serif text-2xl font-semibold text-navy-900">{applicationId}</p>
+          {pdfUrl ? (
+            <a className="btn-primary mt-6" href={pdfUrl} target="_blank" rel="noopener noreferrer">
+              Download application PDF
+            </a>
+          ) : null}
+          {pdfNote ? <p className="mt-4 text-sm text-mute">{pdfNote}</p> : null}
         </div>
       </section>
     );
@@ -291,7 +328,7 @@ export function ApplyForm() {
         Lenders review a completed application and 3–5 months of business bank statements before they can issue a decision.
       </p>
 
-      <ol className="mt-8 grid grid-cols-5 gap-2" aria-label="Application progress">
+      <ol className="mt-8 grid grid-cols-3 gap-2 sm:grid-cols-6" aria-label="Application progress">
         {steps.map((label, index) => (
           <li key={label}>
             <button
@@ -446,6 +483,49 @@ export function ApplyForm() {
 
         {step === 4 ? (
           <div>
+            <p className="text-sm leading-relaxed text-mute">Sign with your mouse or finger.</p>
+            <div className="mt-4 overflow-hidden rounded-md border border-sand-200 bg-white">
+              <SignatureCanvas
+                ref={signatureRef}
+                penColor="#10233f"
+                backgroundColor="rgb(255, 255, 255)"
+                clearOnResize={false}
+                canvasProps={{ width: 640, height: 160, className: "h-40 w-full touch-none", "aria-label": "Signature" }}
+              />
+            </div>
+            <button
+              type="button"
+              className="mt-3 text-sm font-semibold text-navy-800 underline decoration-gold-500/70 underline-offset-4"
+              onClick={() => {
+                signatureRef.current?.clear();
+                setSignature("");
+              }}
+            >
+              Clear
+            </button>
+            {errors.signature ? <p className="mt-2 text-sm text-red-700">{errors.signature}</p> : null}
+            <label className="mt-6 flex items-start gap-3 text-sm leading-relaxed text-navy-900">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 accent-navy-900"
+                checked={certified}
+                onChange={(event) => {
+                  setCertified(event.target.checked);
+                  setErrors((current) => {
+                    const next = { ...current };
+                    delete next.certified;
+                    return next;
+                  });
+                }}
+              />
+              <span>I certify the information provided is true and correct.</span>
+            </label>
+            {errors.certified ? <p className="mt-2 text-sm text-red-700">{errors.certified}</p> : null}
+          </div>
+        ) : null}
+
+        {step === 5 ? (
+          <div>
             <Review title="Business" onEdit={() => goTo(0)} rows={[
               ["Legal name", draft.legalBusinessName],
               ["DBA", draft.dba || "—"],
@@ -471,23 +551,21 @@ export function ApplyForm() {
               ["How soon", draft.howSoon],
             ]} />
             <Review title="Bank statements" onEdit={() => goTo(3)} rows={draft.statements.map((file) => [file.name, "Uploaded"])} />
-            <label className="mt-6 flex items-start gap-3 text-sm leading-relaxed text-navy-900">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 accent-navy-900"
-                checked={certified}
-                onChange={(event) => {
-                  setCertified(event.target.checked);
-                  setErrors((current) => {
-                    const next = { ...current };
-                    delete next.certified;
-                    return next;
-                  });
-                }}
-              />
-              <span>I certify the information provided is true and correct.</span>
-            </label>
-            {errors.certified ? <p className="mt-2 text-sm text-red-700">{errors.certified}</p> : null}
+            <section className="mt-6 border-t border-sand-200 pt-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-serif text-xl font-semibold text-navy-900">Signature</h2>
+                <button type="button" onClick={() => goTo(4)} className="text-sm font-semibold text-navy-800 underline decoration-gold-500/70 underline-offset-4">
+                  Edit
+                </button>
+              </div>
+              {signature ? (
+                // The signature is a local data URL and is not served from the image optimizer.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={signature} alt="Drawn signature" className="mt-3 h-24 max-w-full rounded-md border border-sand-200 bg-white" />
+              ) : (
+                <p className="mt-3 text-sm text-mute">—</p>
+              )}
+            </section>
             <p className="mt-4 text-sm leading-relaxed text-mute">
               Your information is used solely to match you with financing options. Didact Capital is not a lender.
             </p>
@@ -506,7 +584,7 @@ export function ApplyForm() {
               Back
             </button>
           ) : <span />}
-          {step < 4 ? (
+          {step < 5 ? (
             <button type="button" className="btn-primary" onClick={continueStep} disabled={Boolean(uploading)}>
               Continue
             </button>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 import {
   applicationId,
   fieldErrors,
@@ -6,6 +7,7 @@ import {
   plainDashes,
   submitApplicationSchema,
 } from "@/lib/application-schema";
+import { buildApplicationPdf } from "@/lib/application-pdf";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { encryptSsn } from "@/lib/ssn-crypto";
 
@@ -126,12 +128,48 @@ export async function POST(request: Request) {
       console.error("Application submission failed", id, airtable.status);
       return NextResponse.json({ ok: false, message: friendlyError, airtableError }, { status: 502 });
     }
+
+    const created = (await airtable.json()) as { records?: Array<{ id?: string }> };
+    const recordId = created.records?.[0]?.id;
+
+    try {
+      const submittedAt = new Date();
+      const pdf = await buildApplicationPdf(application, id, submittedAt);
+      const token = process.env.BLOB_READ_WRITE_TOKEN;
+      if (!token) {
+        console.error("Application PDF storage is not configured.");
+        return NextResponse.json({ ok: true, applicationId: id, message: "Your application was received, but the PDF could not be saved." });
+      }
+
+      const blob = await put(`applications/application-${id}.pdf`, Buffer.from(pdf), {
+        access: "private",
+        contentType: "application/pdf",
+        token,
+      });
+
+      if (recordId) {
+        const update = await fetch(`${url}/${encodeURIComponent(recordId)}`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ fields: { "Application PDF URL": blob.url } }),
+        });
+        if (!update.ok) {
+          console.error("Application PDF URL was not saved", id, update.status);
+        }
+      }
+
+      return NextResponse.json({ ok: true, applicationId: id, pdfUrl: blob.url });
+    } catch (error) {
+      console.error("Application PDF could not be generated", id, error instanceof Error ? error.name : "Error");
+      return NextResponse.json({ ok: true, applicationId: id, message: "Your application was received, but the PDF could not be saved." });
+    }
   } catch (error) {
     console.error("Application submission error", id, error instanceof Error ? error.name : "Error");
     return NextResponse.json({ ok: false, message: friendlyError }, { status: 502 });
   }
-
-  return NextResponse.json({ ok: true, applicationId: id });
 }
 
 async function readAirtableError(response: Response, apiKey: string) {
