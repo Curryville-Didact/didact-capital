@@ -143,17 +143,10 @@ export const fundingStepSchema = z.object({
 });
 
 export const statementSchema = z.object({
-  name: z.string().trim().min(1).max(180),
-  url: z
+  name: z
     .string()
-    .url()
-    .refine((value) => {
-      try {
-        return new URL(value).hostname.endsWith(".blob.vercel-storage.com");
-      } catch {
-        return false;
-      }
-    }, "Upload the statement through this form."),
+    .trim()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,160}\.pdf$/, "Upload the statement through this form."),
   size: z.number().int().positive().max(MAX_STATEMENT_BYTES, "Each statement must be 10MB or smaller."),
 });
 

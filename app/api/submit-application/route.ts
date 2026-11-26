@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     "Amount Needed": plainDashes(application.amountNeeded),
     "Use of Funds": plainDashes(application.useOfFunds),
     "How Soon": plainDashes(application.howSoon),
-    "Bank Statement URLs": application.statements.map((file) => file.url).join(", "),
+    "Bank Statement URLs": application.statements.map((file) => file.name).join(", "),
     Status: "New",
     Lender: "Unassigned",
     Notes: notes,

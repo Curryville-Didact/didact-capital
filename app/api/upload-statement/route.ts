@@ -49,18 +49,17 @@ export async function POST(request: Request) {
     return fail("Upload the statement as a PDF.", 400);
   }
 
-  const displayName = originalName.replace(/[^a-zA-Z0-9._ -]/g, "_").slice(0, 180) || "statement.pdf";
-  const filePart = (displayName.toLowerCase().endsWith(".pdf") ? displayName : `${displayName}.pdf`).replace(/\s+/g, "_");
-  const pathname = `statements/${randomBytes(8).toString("hex")}-${filePart}`;
+  const filename = `${randomBytes(4).toString("hex")}.pdf`;
+  const pathname = `statements/${filename}`;
 
   try {
-    const blob = await put(pathname, bytes, {
+    await put(pathname, bytes, {
       access: "private",
       contentType: "application/pdf",
       token,
     });
 
-    return NextResponse.json({ ok: true, url: blob.url, filename: displayName });
+    return NextResponse.json({ ok: true, filename });
   } catch {
     console.error("Statement upload failed");
     return fail("We couldn't upload that statement. Try again in a moment.", 500);

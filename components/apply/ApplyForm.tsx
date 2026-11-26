@@ -204,13 +204,13 @@ export function ApplyForm() {
         const body = new FormData();
         body.append("file", file);
         const response = await fetch("/api/upload-statement", { method: "POST", body });
-        const payload = (await response.json()) as { ok?: boolean; url?: string; filename?: string; message?: string };
-        if (!response.ok || !payload.ok || !payload.url) {
+        const payload = (await response.json()) as { ok?: boolean; filename?: string; message?: string };
+        if (!response.ok || !payload.ok || !payload.filename) {
           setFormError(payload.message || `Couldn't upload ${file.name}.`);
           break;
         }
         setProgress(100);
-        uploaded.push({ name: payload.filename || file.name, url: payload.url, size: file.size });
+        uploaded.push({ name: payload.filename, size: file.size });
       } catch {
         setFormError(`Couldn't upload ${file.name}.`);
         break;
@@ -467,12 +467,12 @@ export function ApplyForm() {
             {errors.statements ? <p className="mt-3 text-sm text-red-700">{errors.statements}</p> : null}
             <ul className="mt-5 space-y-3">
               {draft.statements.map((file) => (
-                <li key={file.url} className="flex items-center justify-between gap-3 rounded-md border border-sand-200 px-3 py-3">
+                <li key={file.name} className="flex items-center justify-between gap-3 rounded-md border border-sand-200 px-3 py-3">
                   <span className="min-w-0 truncate text-sm font-semibold text-navy-900">{file.name}</span>
                   <button
                     type="button"
                     className="shrink-0 text-sm font-semibold text-navy-800 underline decoration-gold-500/70 underline-offset-4"
-                    onClick={() => setDraft((current) => ({ ...current, statements: current.statements.filter((item) => item.url !== file.url) }))}
+                    onClick={() => setDraft((current) => ({ ...current, statements: current.statements.filter((item) => item.name !== file.name) }))}
                   >
                     Remove
                   </button>
