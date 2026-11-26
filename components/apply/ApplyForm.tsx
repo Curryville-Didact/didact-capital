@@ -309,7 +309,7 @@ export function ApplyForm() {
           <p className="mt-4 text-base text-mute">Your application ID</p>
           <p className="mt-2 font-serif text-2xl font-semibold text-navy-900">{applicationId}</p>
           {pdfUrl ? (
-            <a className="btn-primary mt-6" href={pdfUrl} target="_blank" rel="noopener noreferrer">
+            <a className="btn-primary mt-6" href={`/api/download-pdf?id=${encodeURIComponent(applicationId)}`} target="_blank" rel="noopener noreferrer">
               Download application PDF
             </a>
           ) : null}
