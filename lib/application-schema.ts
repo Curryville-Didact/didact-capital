@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { amountOptions, industryOptions, timingOptions } from "@/lib/lead-schema";
+import { industryOptions, timingOptions } from "@/lib/lead-schema";
 
 export const entityTypes = ["LLC", "Corp", "Sole Prop", "Partnership"] as const;
 
@@ -10,6 +10,15 @@ export const creditScoreRanges = [
   "650–699",
   "700–749",
   "750+",
+] as const;
+
+export const amountNeededOptions = [
+  "Under $25K",
+  "$25K-$50K",
+  "$50K-$100K",
+  "$100K-$250K",
+  "$250K-$500K",
+  "$500K+",
 ] as const;
 
 export const useOfFundsOptions = [
@@ -117,7 +126,7 @@ export const ownerStepSchema = z.object({
 });
 
 export const fundingStepSchema = z.object({
-  amountNeeded: selectOption(amountOptions, "Select an amount."),
+  amountNeeded: selectOption(amountNeededOptions, "Select an amount."),
   useOfFunds: selectOption(useOfFundsOptions, "Select how the funds will be used."),
   howSoon: selectOption(timingOptions, "Select when you need funds."),
 });
