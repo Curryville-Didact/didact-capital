@@ -8,6 +8,7 @@ import {
   submitApplicationSchema,
 } from "@/lib/application-schema";
 import { buildApplicationPdf } from "@/lib/application-pdf";
+import { notifyNewApplication } from "@/lib/application-email";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { encryptSsn } from "@/lib/ssn-crypto";
 
@@ -160,6 +161,20 @@ export async function POST(request: Request) {
           console.error("Application PDF URL was not saved", id, update.status);
         }
       }
+
+      console.log("Attempting to send application email");
+      const emailResult = await notifyNewApplication({
+        applicationId: id,
+        businessName: application.legalBusinessName,
+        ownerName: application.ownerName,
+        amountNeeded: application.amountNeeded,
+        useOfFunds: application.useOfFunds,
+        howSoon: application.howSoon,
+        creditScoreRange: application.creditScoreRange,
+        statementCount: application.statements.length,
+        recordId,
+      });
+      console.log("Resend response:", emailResult);
 
       return NextResponse.json({ ok: true, applicationId: id, pdfUrl: blob.url });
     } catch (error) {
