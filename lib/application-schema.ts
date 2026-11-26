@@ -22,11 +22,14 @@ export const amountNeededOptions = [
 ] as const;
 
 export const useOfFundsOptions = [
-  "equipment",
-  "payroll",
-  "materials",
-  "working capital",
-  "other",
+  "Working Capital",
+  "Equipment",
+  "Inventory",
+  "Expansion",
+  "Payroll",
+  "Marketing",
+  "Refinance Debt",
+  "Other",
 ] as const;
 
 export function plainDashes(value: string) {
