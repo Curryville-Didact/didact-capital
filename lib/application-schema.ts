@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { industryOptions, timingOptions } from "@/lib/lead-schema";
+import { industryOptions } from "@/lib/lead-schema";
 
 export const entityTypes = ["LLC", "Corp", "Sole Prop", "Partnership"] as const;
 
@@ -30,6 +30,14 @@ export const useOfFundsOptions = [
   "Marketing",
   "Refinance Debt",
   "Other",
+] as const;
+
+export const howSoonOptions = [
+  "Immediately",
+  "Within 1 week",
+  "Within 1 month",
+  "1-3 months",
+  "Just exploring",
 ] as const;
 
 export function plainDashes(value: string) {
@@ -131,7 +139,7 @@ export const ownerStepSchema = z.object({
 export const fundingStepSchema = z.object({
   amountNeeded: selectOption(amountNeededOptions, "Select an amount."),
   useOfFunds: selectOption(useOfFundsOptions, "Select how the funds will be used."),
-  howSoon: selectOption(timingOptions, "Select when you need funds."),
+  howSoon: selectOption(howSoonOptions, "Select when you need funds."),
 });
 
 export const statementSchema = z.object({

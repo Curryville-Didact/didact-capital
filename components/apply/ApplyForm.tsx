@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
-import { industryOptions, timingOptions } from "@/lib/lead-schema";
+import { industryOptions } from "@/lib/lead-schema";
 import {
   MAX_STATEMENT_BYTES,
   MAX_STATEMENTS,
@@ -11,6 +11,7 @@ import {
   businessStepSchema,
   creditScoreRanges,
   entityTypes,
+  howSoonOptions,
   fieldErrors,
   fundingStepSchema,
   ownerStepSchema,
@@ -432,7 +433,7 @@ export function ApplyForm() {
           <div className="grid gap-4">
             <Select label="Amount needed" id="amountNeeded" value={draft.amountNeeded} error={errors.amountNeeded} options={amountNeededOptions} onChange={(value) => update("amountNeeded", value)} />
             <Select label="Use of funds" id="useOfFunds" value={draft.useOfFunds} error={errors.useOfFunds} options={useOfFundsOptions} onChange={(value) => update("useOfFunds", value)} />
-            <Select label="How soon do you need funds?" id="howSoon" value={draft.howSoon} error={errors.howSoon} options={timingOptions} onChange={(value) => update("howSoon", value)} />
+            <Select label="How soon do you need funds?" id="howSoon" value={draft.howSoon} error={errors.howSoon} options={howSoonOptions} onChange={(value) => update("howSoon", value)} />
           </div>
         ) : null}
 
