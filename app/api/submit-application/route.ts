@@ -3,6 +3,7 @@ import {
   applicationId,
   fieldErrors,
   formatAddress,
+  plainDashes,
   submitApplicationSchema,
 } from "@/lib/application-schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
@@ -74,10 +75,10 @@ export async function POST(request: Request) {
     "Business Name": application.legalBusinessName,
     Email: application.email,
     Phone: application.phone,
-    "Entity Type": application.entityType,
+    "Entity Type": plainDashes(application.entityType),
     EIN: application.ein,
     "Business Start Date": application.businessStartDate,
-    Industry: application.industry,
+    Industry: plainDashes(application.industry),
     "Business Address": formatAddress(
       application.street,
       application.city,
@@ -89,10 +90,10 @@ export async function POST(request: Request) {
     // Temporary for debugging: omit Ownership Percentage from the Airtable payload.
     // "Ownership Percentage": String(application.ownershipPercentage),
     "SSN Encrypted": ssnEncrypted,
-    "Credit Score Range": application.creditScoreRange,
-    "Amount Needed": application.amountNeeded,
-    "Use of Funds": application.useOfFunds,
-    "How Soon": application.howSoon,
+    "Credit Score Range": plainDashes(application.creditScoreRange),
+    "Amount Needed": plainDashes(application.amountNeeded),
+    "Use of Funds": plainDashes(application.useOfFunds),
+    "How Soon": plainDashes(application.howSoon),
     "Bank Statement URLs": application.statements.map((file) => file.url).join(", "),
     Status: "New",
     Lender: "Unassigned",

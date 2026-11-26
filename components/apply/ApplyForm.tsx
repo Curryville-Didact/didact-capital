@@ -16,6 +16,7 @@ import {
   fieldErrors,
   fundingStepSchema,
   ownerStepSchema,
+  plainDashes,
   statementsSchema,
   useOfFundsOptions,
   type StatementFile,
@@ -238,6 +239,12 @@ export function ApplyForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...parsed,
+          entityType: plainDashes(draft.entityType),
+          industry: plainDashes(draft.industry),
+          creditScoreRange: plainDashes(draft.creditScoreRange),
+          amountNeeded: plainDashes(draft.amountNeeded),
+          useOfFunds: plainDashes(draft.useOfFunds),
+          howSoon: plainDashes(draft.howSoon),
           ownershipPercentage: result.success ? result.data.ownershipPercentage : Number(String(draft.ownershipPercentage).replace(/%/g, "")),
         }),
       });

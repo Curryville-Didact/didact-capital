@@ -20,6 +20,19 @@ export const useOfFundsOptions = [
   "other",
 ] as const;
 
+export function plainDashes(value: string) {
+  return value.replace(/[–—]/g, "-");
+}
+
+function selectOption(options: readonly string[], message: string) {
+  const allowed = new Set(options.map(plainDashes));
+  return z
+    .string()
+    .trim()
+    .transform(plainDashes)
+    .refine((value) => allowed.has(value), { message });
+}
+
 export const MAX_STATEMENT_BYTES = 10 * 1024 * 1024;
 export const MIN_STATEMENTS = 3;
 export const MAX_STATEMENTS = 5;
@@ -56,13 +69,13 @@ const pastDate = (label: string) =>
 export const businessStepSchema = z.object({
   legalBusinessName: requiredText("the legal business name", 160),
   dba: z.string().trim().max(160, "DBA must be 160 characters or fewer."),
-  entityType: z.enum(entityTypes, { errorMap: () => ({ message: "Select an entity type." }) }),
+  entityType: selectOption(entityTypes, "Select an entity type."),
   ein: z
     .string()
     .trim()
     .regex(/^\d{2}-?\d{7}$/, "Enter an EIN as 9 digits (XX-XXXXXXX)."),
   businessStartDate: pastDate("the business start date"),
-  industry: z.enum(industryOptions, { errorMap: () => ({ message: "Select an industry." }) }),
+  industry: selectOption(industryOptions, "Select an industry."),
   street: requiredText("the street address", 160),
   city: requiredText("the city", 80),
   state: stateCode,
@@ -100,13 +113,13 @@ export const ownerStepSchema = z.object({
         .min(1, "Ownership must be at least 1%.")
         .max(100, "Ownership cannot be more than 100%."),
     ),
-  creditScoreRange: z.enum(creditScoreRanges, { errorMap: () => ({ message: "Select a credit score range." }) }),
+  creditScoreRange: selectOption(creditScoreRanges, "Select a credit score range."),
 });
 
 export const fundingStepSchema = z.object({
-  amountNeeded: z.enum(amountOptions, { errorMap: () => ({ message: "Select an amount." }) }),
-  useOfFunds: z.enum(useOfFundsOptions, { errorMap: () => ({ message: "Select how the funds will be used." }) }),
-  howSoon: z.enum(timingOptions, { errorMap: () => ({ message: "Select when you need funds." }) }),
+  amountNeeded: selectOption(amountOptions, "Select an amount."),
+  useOfFunds: selectOption(useOfFundsOptions, "Select how the funds will be used."),
+  howSoon: selectOption(timingOptions, "Select when you need funds."),
 });
 
 export const statementSchema = z.object({
